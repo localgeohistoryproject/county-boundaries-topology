@@ -1,4 +1,4 @@
-# Atlas of Historical County Boundaries: Conversion to Topology
+# Atlas of Historical County Boundaries: Conversion to Topology [![DOI](https://zenodo.org/badge/536871432.svg)](https://zenodo.org/badge/latestdoi/536871432)
 
 ## Summary
 
