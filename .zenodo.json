@@ -1,0 +1,20 @@
+{
+    "creators": [
+        {
+            "orcid": "0000-0002-1212-5674",
+            "name": "Mark A. Connelly"
+        }
+    ],
+    "description": "<p>The Atlas of Historical County Boundaries is a resource created by <a href=\"https://www.newberry.org/\">The Newberry Library</a>, Chicago, Illinois, to document changes in county and county-equivalent boundaries in the United States of America over time. In 2019, The Newberry Library donated the project shapefiles to the Library of Congress and released them under a <a href=\"https://creativecommons.org/share-your-work/public-domain/cc0/\">Creative Commons CC0 &quot;No Rights Reserved&quot; License</a>.</p>\n\n<p>Each multipolygon feature in the project shapefile data represents a particular government unit (or non-county or disputed area) for a particular time period. In order to avoid duplication of shared boundaries, the scripts in this repository convert these features into least common geometries,<sup>1</sup> which, once further converted to a PostGIS topology and exported as edges (or &quot;ways&quot;), can be imported into other projects with topological data models, like OpenHistoricalMap.</p>\n\n<p>The files that were exported as a ZIP archive by the scripts are included in the release in the output folder. For additional information, see the README.md file.</p>\n\n<p>1. Martina De Moor and Torsten Wiedemann, &quot;Reconstructing Territorial Units and Hierarchies: A Belgian Example,&quot; <em>History and Computing</em> 13, no. 1 (March 2001): 71-98, <a href=\"https://doi.org/10.3366/hac.2001.13.1.71\">https://doi.org/10.3366/hac.2001.13.1.71</a>.</p>",
+    "keywords": [
+        "gis",
+        "counties",
+        "boundaries",
+        "geohistory"
+    ],
+    "language": "eng",
+    "license": {
+        "id": "CC0-1.0"
+    },
+    "title": "Atlas of Historical County Boundaries: Conversion to Topology"
+}
