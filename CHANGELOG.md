@@ -4,9 +4,9 @@
 
 ### Added
 
-  - Changelog.
-  - Zenodo DOI badge to README.
-  - Zenodo metadata file.
+- Changelog.
+- Zenodo DOI badge to README.
+- Zenodo metadata file.
 
 ## [1.0.0] - 2022-09-15
 
