@@ -14,19 +14,19 @@ Each multipolygon feature in the project shapefile data represents a particular 
 
 There are two files in the script folder. The shell script, NewberryLoc.sh, which was created for Ubuntu 20.04:
 
-* Downloads the ZIP files from the Library of Congress website.
-* Retrieves the appropriate shapefiles from each ZIP file.
-* Creates a new PostGIS-enabled database in PostgreSQL called newberrytopology.
-* Imports the shapefiles using shp2pgsql, and then deletes the unzipped shapefiles.
-* Runs the processing SQL script, which is detailed below.
-* Exports the processed data and places it in one ZIP file (whose contents have been placed in the output folder).
+  * Downloads the ZIP files from the Library of Congress website.
+  * Retrieves the appropriate shapefiles from each ZIP file.
+  * Creates a new PostGIS-enabled database in PostgreSQL called newberrytopology.
+  * Imports the shapefiles using shp2pgsql, and then deletes the unzipped shapefiles.
+  * Runs the processing SQL script, which is detailed below.
+  * Exports the processed data and places it in one ZIP file (whose contents have been placed in the output folder).
 
 The processing SQL script, NewberryLoc.sql, which was created for PostgreSQL 14.4:
 
-* Creates a base polygon layer from the imported multipolygons consisting of the county boundaries as of the end of 2000 and additional areas covered by the atlas outside of the United States of America.
-* Splits the base polygon layer using non-matching segments from all of the historic county and state multipolygons, creating least common geometries.
-* Creates a PostGIS topology from the least common geometries.
-* Determines which edges in the PostGIS topology correspond with each of the imported multipolygons, with an attempt to separate out outer rings from inner rings.
+  * Creates a base polygon layer from the imported multipolygons consisting of the county boundaries as of the end of 2000 and additional areas covered by the atlas outside of the United States of America.
+  * Splits the base polygon layer using non-matching segments from all of the historic county and state multipolygons, creating least common geometries.
+  * Creates a PostGIS topology from the least common geometries.
+  * Determines which edges in the PostGIS topology correspond with each of the imported multipolygons, with an attempt to separate out outer rings from inner rings.
 
 ## Output
 
