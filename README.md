@@ -30,7 +30,7 @@ The processing SQL script, NewberryLoc.sql, which was created for PostgreSQL 14.
 
 ## Output
 
-The script output consists of four CSV files, along with a shapefile. The CSVs ending in \_metadata.csv contain the original field data for each of the multipolygon features in the downloaded shapefiles, including the *id_num* primary key. The output_ways shapefile (.cpg, .dbf, .prj, .shp, .shx) includes the edges (or "ways") derived from the PostGIS topology created from the least common geometries, with the sole metadata field being a primary key, *edge_id*. The CSVs ending in_ways.csv link *id_num* values in the \_metadata.csv CSVs with each *edge_id* in the shapefiles, along with the predicted edge type, allowing for the creation of faces (or "relations") in other projects with topological data models, like OpenHistoricalMap.
+The script output consists of four CSV files, along with a shapefile. The CSVs ending in \_metadata.csv contain the original field data for each of the multipolygon features in the downloaded shapefiles, including the *id_num* primary key. The output_ways shapefile (.cpg, .dbf, .prj, .shp, .shx) includes the edges (or "ways") derived from the PostGIS topology created from the least common geometries, with the sole metadata field being a primary key, *edge_id*. The CSVs ending in \_ways.csv link *id_num* values in the \_metadata.csv CSVs with each *edge_id* in the shapefiles, along with the predicted edge type, allowing for the creation of faces (or "relations") in other projects with topological data models, like OpenHistoricalMap.
 
 ## Source Data
 
