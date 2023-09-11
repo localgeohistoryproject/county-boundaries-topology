@@ -13,17 +13,18 @@ now=$(date +"%T")
 echo "Started: $now"
 # Check if necessary programs installed
 which curl &> /dev/null
-if [ $? -gt 0 ]; then echo "ERROR: curl must be installed in order to run this script."; exit 1; fi;
+if [ $? -gt 0 ]; then echo "ERROR: curl must be installed to run this script."; exit 1; fi;
 which pgsql2shp &> /dev/null
-if [ $? -gt 0 ]; then echo "ERROR: pgsql2shp must be installed in order to run this script."; exit 1; fi;
+if [ $? -gt 0 ]; then echo "ERROR: pgsql2shp must be installed to run this script."; exit 1; fi;
 which psql &> /dev/null
-if [ $? -gt 0 ]; then echo "ERROR: psql must be installed in order to run this script."; exit 1; fi;
+if [ $? -gt 0 ]; then echo "ERROR: psql must be installed to run this script."; exit 1; fi;
 which shp2pgsql &> /dev/null
-if [ $? -gt 0 ]; then echo "ERROR: shp2pgsql must be installed in order to run this script."; exit 1; fi;
+if [ $? -gt 0 ]; then echo "ERROR: shp2pgsql must be installed to run this script."; exit 1; fi;
 which unzip &> /dev/null
-if [ $? -gt 0 ]; then echo "ERROR: unzip must be installed in order to run this script."; exit 1; fi;
+if [ $? -gt 0 ]; then echo "ERROR: unzip must be installed to run this script."; exit 1; fi;
 which zip &> /dev/null
-if [ $? -gt 0 ]; then echo "ERROR: zip must be installed in order to run this script."; exit 1; fi;
+if [ $? -gt 0 ]; then echo "ERROR: zip must be installed to run this script."; exit 1; fi;
+if [ ! -f "../.env" ]; then echo "ERROR: Environmental variable file (.env) must be created to run this script."; exit 1; fi;
 # Set environmental variables
 source ../.env
 export PGPASSWORD=$POSTGRES_PASSWORD
