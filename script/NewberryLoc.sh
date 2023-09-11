@@ -24,11 +24,17 @@ which unzip &> /dev/null
 if [ $? -gt 0 ]; then echo "ERROR: unzip must be installed in order to run this script."; exit 1; fi;
 which zip &> /dev/null
 if [ $? -gt 0 ]; then echo "ERROR: zip must be installed in order to run this script."; exit 1; fi;
-exit 0;
-# Download ZIP file
-curl https://tile.loc.gov/storage-services/master/gdc/gdcdatasets/2018487899_us/2018487899_us.zip --output master-gdc-gdcdatasets-2018487899_us-2018487899_us.zip
+# Set environmental variables
+source ../.env
+export PGPASSWORD=$POSTGRES_PASSWORD
+# Download ZIP file if required
+if [ "" == "$LOC_LOCATION" ];
+then
+  LOC_LOCATION=locfile
+  curl https://tile.loc.gov/storage-services/master/gdc/gdcdatasets/2018487899_us/2018487899_us.zip --output "$LOC_LOCATION"
+fi;
 # Retrieve appropriate shapefiles from ZIP file
-unzip -j master-gdc-gdcdatasets-2018487899_us-2018487899_us.zip 2018487899_us/2018487899_US_Historical_Counties_1629-2000.zip 2018487899_us/2018487899_US_Historical_States_and_Territories_1783-2000.zip
+unzip -j "$LOC_LOCATION" 2018487899_us/2018487899_US_Historical_Counties_1629-2000.zip 2018487899_us/2018487899_US_Historical_States_and_Territories_1783-2000.zip
 unzip -j 2018487899_US_Historical_Counties_1629-2000.zip US_Historical_Counties_1629-2000/US_AtlasHCB_Counties.zip
 rm 2018487899_US_Historical_Counties_1629-2000.zip
 unzip -j US_AtlasHCB_Counties.zip US_AtlasHCB_Counties/US_HistCounties_Shapefile/*
@@ -37,9 +43,6 @@ unzip -j 2018487899_US_Historical_States_and_Territories_1783-2000.zip US_Histor
 rm 2018487899_US_Historical_States_and_Territories_1783-2000.zip
 unzip -j US_AtlasHCB_StateTerr.zip US_AtlasHCB_StateTerr/US_HistStateTerr_Shapefile/*
 rm US_AtlasHCB_StateTerr.zip
-# Set environmental variables
-source ../.env
-export PGPASSWORD=$POSTGRES_PASSWORD
 # Create database and ensure it is PostGIS-enabled
 psql --host=$POSTGRES_HOST --port=$POSTGRES_PORT --username=$POSTGRES_USER --no-password --command="CREATE DATABASE $POSTGRES_DB;" $POSTGRES_DEFAULT_DB
 psql --host=$POSTGRES_HOST --port=$POSTGRES_PORT --username=$POSTGRES_USER --no-password --command="CREATE EXTENSION postgis;" $POSTGRES_DB
