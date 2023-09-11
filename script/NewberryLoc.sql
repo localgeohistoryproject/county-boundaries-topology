@@ -7,6 +7,11 @@
 -- PostgreSQL Version: 14 or 15
 --
 
+-- Trim field to remove trailing line break
+
+UPDATE us_histcounties
+SET full_name = trim(full_name);
+
 -- Break multipolygons into polygons
 
 CREATE TABLE IF NOT EXISTS us_histcounties_polygon
