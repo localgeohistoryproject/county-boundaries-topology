@@ -521,6 +521,60 @@ JOIN idnumgroups
   ON us_histstateterr.id_num = idnumgroups.id_num
 ORDER BY 1;
 
+-- Create separate edge_id based on most recent FIPS and location
+
+CREATE TABLE IF NOT EXISTS topologydata.edge_fips
+(
+    gid serial NOT NULL,
+    edge_id integer,
+    fips_edge_id integer,
+    CONSTRAINT edge_fips_pkey PRIMARY KEY (gid)
+);
+
+WITH faces AS (
+    SELECT fips,
+    (GetTopoGeomElements(topogeometry))[1] AS face_id
+    FROM topologydata.us_split_topology
+), edges AS (
+    SELECT DISTINCT fips,
+    abs(edge_id) AS edge_id
+    FROM faces, ST_GetFaceEdges('topologydata', face_id) AS t(edge_sequence, edge_id)
+), edgefips AS (
+    SELECT edge_id, min(fips)::integer AS fips
+    FROM edges
+    WHERE fips IS NOT NULL
+    GROUP BY 1
+), edgefipscoalesce AS (
+    SELECT edge_id,
+        fips
+    FROM edgefips
+    UNION
+    SELECT edge_id,
+        0 AS fips
+    FROM topologydata.edge_data
+    WHERE edge_id NOT IN (
+        SELECT edge_id
+        FROM edgefips
+    )
+), edgeorder AS (
+    SELECT edgefipscoalesce.edge_id,
+        fips,
+        ROW_NUMBER() OVER (PARTITION BY fips
+            ORDER BY ST_XMin(geom),
+              ST_YMin(geom),
+              ST_XMax(geom),
+              ST_YMax(geom)
+        )::integer AS fipsorder
+    FROM edgefipscoalesce
+    JOIN topologydata.edge_data
+      ON edgefipscoalesce.edge_id = edge_data.edge_id
+)
+INSERT INTO topologydata.edge_fips (edge_id, fips_edge_id)
+SELECT edge_id AS edge_id,
+    fips * 10000 + fipsorder AS fips_edge_id
+FROM edgeorder
+ORDER BY 1;
+
 -- Determine edges and whether inner-outer (outstanding issues: Need to verify this works correctly. Do they have to be in order? What about outer inside inner?)
 
 CREATE TABLE IF NOT EXISTS topologydata.us_histcounties_topology_edge
@@ -573,12 +627,14 @@ WITH faces AS (
 )
 INSERT INTO topologydata.us_histcounties_topology_edge (id_num, edge_id, edge_type)
 SELECT DISTINCT edges.id_num,
-edges.edge_id,
+edge_fips.fips_edge_id AS edge_id,
 CASE
     WHEN exteriorrings.id_num IS NOT NULL THEN 'inner'
     ELSE 'outer'
 END AS edge_type
 FROM edges
+JOIN topologydata.edge_fips
+  ON edges.edge_id = edge_fips.edge_id
 LEFT JOIN edges otheredges
   ON edges.id_num = otheredges.id_num
   AND edges.edge_id = otheredges.edge_id
@@ -644,12 +700,14 @@ WITH faces AS (
 )
 INSERT INTO topologydata.us_histstateterr_topology_edge (id_num, edge_id, edge_type)
 SELECT DISTINCT edges.id_num,
-edges.edge_id,
+edge_fips.fips_edge_id AS edge_id,
 CASE
     WHEN exteriorrings.id_num IS NOT NULL THEN 'inner'
     ELSE 'outer'
 END AS edge_type
 FROM edges
+JOIN topologydata.edge_fips
+  ON edges.edge_id = edge_fips.edge_id
 LEFT JOIN edges otheredges
   ON edges.id_num = otheredges.id_num
   AND edges.edge_id = otheredges.edge_id
