@@ -7,10 +7,10 @@
 -- PostgreSQL Version: 14 or 15
 --
 
--- Trim field to remove trailing line break
+-- Remove trailing line breaks
 
 UPDATE us_histcounties
-SET full_name = trim(full_name);
+SET full_name = regexp_replace(full_name, '\r\n', '');
 
 -- Break multipolygons into polygons
 
