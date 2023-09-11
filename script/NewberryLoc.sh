@@ -27,10 +27,12 @@ if [ ! -f "../.env" ]; then echo "ERROR: Environmental variable file (.env) must
 source ../.env
 export PGPASSWORD=$POSTGRES_PASSWORD
 # Download ZIP file if required
-if [ "" == "$LOC_LOCATION" ];
-then
+if [ "" == "$LOC_LOCATION" ]; then
   LOC_LOCATION=locfile
   curl https://tile.loc.gov/storage-services/master/gdc/gdcdatasets/2018487899_us/2018487899_us.zip --output "$LOC_LOCATION"
+elif [ ! -f "$LOC_LOCATION" ]; then
+  echo "ERROR: Missing dataset ZIP.";
+  exit 1;
 fi;
 # Retrieve appropriate shapefiles from ZIP file
 unzip -j "$LOC_LOCATION" 2018487899_us/2018487899_US_Historical_Counties_1629-2000.zip 2018487899_us/2018487899_US_Historical_States_and_Territories_1783-2000.zip
