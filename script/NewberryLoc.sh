@@ -6,8 +6,6 @@
 # License: Creative Commons Zero (CC0)
 # Operating System: Ubuntu 20.04 or 22.04
 #
-# Note: if the CURL operation fails, navigate to https://www.loc.gov/item/2018487899/ and download the "US dataset" (1.0 GB).
-#
 # Keep track of started time
 now=$(date +"%T")
 echo "Started: $now"
