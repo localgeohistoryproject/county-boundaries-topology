@@ -423,7 +423,8 @@ SELECT topology.AddTopoGeometryColumn('topologydata', 'topologydata', 'us_split_
 INSERT INTO topologydata.us_split_topology (name, id, state_terr, fips, county_id_nums, state_id_nums, topogeometry)
 SELECT name, id, state_terr, fips, county_id_nums, state_id_nums,
     topology.toTopoGeom(geom, 'topologydata', 1)
-FROM us_split;
+FROM us_split
+ORDER BY 1;
 
 -- Combine splits back together into county and state topology layers
 
@@ -471,7 +472,8 @@ SELECT us_histcounties.id_num, name, id, state_terr, fips, version, start_date, 
 CreateTopoGeom('topologydata', 3, 2, topogeometryelements) AS topogeometry
 FROM us_histcounties
 JOIN idnumgroups
-  ON us_histcounties.id_num = idnumgroups.id_num;
+  ON us_histcounties.id_num = idnumgroups.id_num
+ORDER BY 1;
 
 CREATE TABLE IF NOT EXISTS topologydata.us_histstateterr_topology
 (
@@ -516,7 +518,8 @@ SELECT us_histstateterr.id_num, name, id, version, start_date, end_date, change,
 CreateTopoGeom('topologydata', 3, 3, topogeometryelements) AS topogeometry
 FROM us_histstateterr
 JOIN idnumgroups
-  ON us_histstateterr.id_num = idnumgroups.id_num;
+  ON us_histstateterr.id_num = idnumgroups.id_num
+ORDER BY 1;
 
 -- Determine edges and whether inner-outer (outstanding issues: Need to verify this works correctly. Do they have to be in order? What about outer inside inner?)
 
