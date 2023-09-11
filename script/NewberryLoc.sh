@@ -40,7 +40,7 @@ psql --host=$POSTGRES_HOST --port=$POSTGRES_PORT --username=$POSTGRES_USER --no-
 psql --host=$POSTGRES_HOST --port=$POSTGRES_PORT --username=$POSTGRES_USER --no-password --command="COPY (SELECT id_num, edge_id, edge_type FROM topologydata.us_histcounties_topology_edge ORDER BY gid) TO stdout WITH CSV HEADER;" $POSTGRES_DB > output_counties_ways.csv;
 psql --host=$POSTGRES_HOST --port=$POSTGRES_PORT --username=$POSTGRES_USER --no-password --command="COPY (SELECT id_num, name, id, version, start_date, end_date, change, citation, start_n, end_n, area_sqmi, terr_type, full_name, abbr_name, name_start FROM us_histstateterr ORDER BY 1) TO stdout WITH CSV HEADER;" $POSTGRES_DB > output_states_metadata.csv;
 psql --host=$POSTGRES_HOST --port=$POSTGRES_PORT --username=$POSTGRES_USER --no-password --command="COPY (SELECT id_num, edge_id, edge_type FROM topologydata.us_histstateterr_topology_edge ORDER BY gid) TO stdout WITH CSV HEADER;" $POSTGRES_DB > output_states_ways.csv;
-pgsql2shp -f output_ways -h $POSTGRES_HOST -p $POSTGRES_PORT -u postgres $POSTGRES_DB "SELECT edge_id, geom FROM topologydata.edge_data ORDER BY 1"
+pgsql2shp -f output_ways -h $POSTGRES_HOST -p $POSTGRES_PORT -u $POSTGRES_USER $POSTGRES_DB "SELECT edge_id, geom FROM topologydata.edge_data ORDER BY 1"
 # ZIP output data
 zip OHM_Newberry_Output.zip output*
 rm output*
