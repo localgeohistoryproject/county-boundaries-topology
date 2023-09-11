@@ -22,8 +22,6 @@ which shp2pgsql &> /dev/null
 if [ $? -gt 0 ]; then echo "ERROR: shp2pgsql must be installed to run this script."; exit 1; fi;
 which unzip &> /dev/null
 if [ $? -gt 0 ]; then echo "ERROR: unzip must be installed to run this script."; exit 1; fi;
-which zip &> /dev/null
-if [ $? -gt 0 ]; then echo "ERROR: zip must be installed to run this script."; exit 1; fi;
 if [ ! -f "../.env" ]; then echo "ERROR: Environmental variable file (.env) must be created to run this script."; exit 1; fi;
 # Set environmental variables
 source ../.env
@@ -54,14 +52,11 @@ rm US_Hist*
 # Run processing SQL
 psql --host=$POSTGRES_HOST --port=$POSTGRES_PORT --username=$POSTGRES_USER --no-password --file=NewberryLoc.sql $POSTGRES_DB
 # Export processed data
-psql --host=$POSTGRES_HOST --port=$POSTGRES_PORT --username=$POSTGRES_USER --no-password --command="COPY (SELECT us_histcounties.id_num, name, id, state_terr, fips, version, start_date, end_date, change, citation, start_n, end_n, area_sqmi, cnty_type, full_name, cross_ref, name_start FROM us_histcounties ORDER BY 1) TO stdout WITH CSV HEADER;" $POSTGRES_DB > output_counties_metadata.csv;
-psql --host=$POSTGRES_HOST --port=$POSTGRES_PORT --username=$POSTGRES_USER --no-password --command="COPY (SELECT id_num, edge_id, edge_type FROM topologydata.us_histcounties_topology_edge ORDER BY gid) TO stdout WITH CSV HEADER;" $POSTGRES_DB > output_counties_ways.csv;
-psql --host=$POSTGRES_HOST --port=$POSTGRES_PORT --username=$POSTGRES_USER --no-password --command="COPY (SELECT id_num, name, id, version, start_date, end_date, change, citation, start_n, end_n, area_sqmi, terr_type, full_name, abbr_name, name_start FROM us_histstateterr ORDER BY 1) TO stdout WITH CSV HEADER;" $POSTGRES_DB > output_states_metadata.csv;
-psql --host=$POSTGRES_HOST --port=$POSTGRES_PORT --username=$POSTGRES_USER --no-password --command="COPY (SELECT id_num, edge_id, edge_type FROM topologydata.us_histstateterr_topology_edge ORDER BY gid) TO stdout WITH CSV HEADER;" $POSTGRES_DB > output_states_ways.csv;
-pgsql2shp -f output_ways -h $POSTGRES_HOST -p $POSTGRES_PORT -u $POSTGRES_USER $POSTGRES_DB "SELECT edge_id, geom FROM topologydata.edge_data ORDER BY 1"
-# ZIP output data
-zip OHM_Newberry_Output.zip output*
-rm output*
+psql --host=$POSTGRES_HOST --port=$POSTGRES_PORT --username=$POSTGRES_USER --no-password --command="COPY (SELECT us_histcounties.id_num, name, id, state_terr, fips, version, start_date, end_date, change, citation, start_n, end_n, area_sqmi, cnty_type, full_name, cross_ref, name_start FROM us_histcounties ORDER BY 1) TO stdout WITH CSV HEADER;" $POSTGRES_DB > ../output/output_counties_metadata.csv;
+psql --host=$POSTGRES_HOST --port=$POSTGRES_PORT --username=$POSTGRES_USER --no-password --command="COPY (SELECT id_num, edge_id, edge_type FROM topologydata.us_histcounties_topology_edge ORDER BY gid) TO stdout WITH CSV HEADER;" $POSTGRES_DB > ../output/output_counties_ways.csv;
+psql --host=$POSTGRES_HOST --port=$POSTGRES_PORT --username=$POSTGRES_USER --no-password --command="COPY (SELECT id_num, name, id, version, start_date, end_date, change, citation, start_n, end_n, area_sqmi, terr_type, full_name, abbr_name, name_start FROM us_histstateterr ORDER BY 1) TO stdout WITH CSV HEADER;" $POSTGRES_DB > ../output/output_states_metadata.csv;
+psql --host=$POSTGRES_HOST --port=$POSTGRES_PORT --username=$POSTGRES_USER --no-password --command="COPY (SELECT id_num, edge_id, edge_type FROM topologydata.us_histstateterr_topology_edge ORDER BY gid) TO stdout WITH CSV HEADER;" $POSTGRES_DB > ../output/output_states_ways.csv;
+pgsql2shp -f ../output/output_ways -h $POSTGRES_HOST -p $POSTGRES_PORT -u $POSTGRES_USER $POSTGRES_DB "SELECT edge_id, geom FROM topologydata.edge_data ORDER BY 1"
 # Keep track of completed time
 now=$(date +"%T")
 echo "Completed: $now"
