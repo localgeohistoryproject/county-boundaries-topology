@@ -12,7 +12,7 @@ Each multipolygon feature in the project shapefile data represents a particular 
 
 ## Scripts
 
-There are two files in the script folder. The shell script, NewberryLoc.sh, which was created for Ubuntu 20.04:
+There are two files in the script folder. The shell script, **NewberryLoc.sh**, tested on both Ubuntu 20.04 and 22.04, does the following:
 
 * Downloads the ZIP files from the Library of Congress website.
 * Retrieves the appropriate shapefiles from each ZIP file.
@@ -21,12 +21,20 @@ There are two files in the script folder. The shell script, NewberryLoc.sh, whic
 * Runs the processing SQL script, which is detailed below.
 * Exports the processed data and places it in one ZIP file (whose contents have been placed in the output folder).
 
-The processing SQL script, NewberryLoc.sql, which was created for PostgreSQL 14.4:
+The processing SQL script, **NewberryLoc.sql**, is called directly by NewberryLoc.sh. Tested on both PostgreSQL 14 and 15, it does the following:
 
 * Creates a base polygon layer from the imported multipolygons consisting of the county boundaries as of the end of 2000 and additional areas covered by the atlas outside of the United States of America.
 * Splits the base polygon layer using non-matching segments from all of the historic county and state multipolygons, creating least common geometries.
 * Creates a PostGIS topology from the least common geometries.
 * Determines which edges in the PostGIS topology correspond with each of the imported multipolygons, with an attempt to separate out outer rings from inner rings.
+
+## Configuration
+
+The root folder contains a Sample.env file that can be used to create the necessary .env file for the application, which is where the database credentials is stored.
+
+First, copy the Sample.env, and name the copy **.env** (with nothing before the period). Then, populate the values labeled ***, following the directions in the file.
+
+Once this is complete, the **NewberryLoc.sh** shell script can be executed to produce the output files.
 
 ## Output
 
