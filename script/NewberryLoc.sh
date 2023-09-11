@@ -24,11 +24,12 @@ if [ ! -f "../.env" ]; then echo "ERROR: Environmental variable file (.env) must
 # Set environmental variables
 source ../.env
 export PGPASSWORD=$POSTGRES_PASSWORD
-# Download ZIP file if required
+# Download source ZIP and verify location.
 if [ "" == "$LOC_LOCATION" ]; then
   LOC_LOCATION=locfile
   curl https://tile.loc.gov/storage-services/master/gdc/gdcdatasets/2018487899_us/2018487899_us.zip --output "$LOC_LOCATION"
-elif [ ! -f "$LOC_LOCATION" ]; then
+fi;
+if [ ! -f "$LOC_LOCATION" ]; then
   echo "ERROR: Missing dataset ZIP.";
   exit 1;
 fi;
