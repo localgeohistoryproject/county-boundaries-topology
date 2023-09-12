@@ -1,11 +1,16 @@
 --
--- Title: "Atlas of historical county boundaries" Processing SQL
+-- Title: "Atlas of Historical County Boundaries" Processing SQL
 -- By: Mark A. Connelly
--- Year: 2022
+-- Year: 2022-2023
 -- License: Creative Commons Zero (CC0)
--- Operating System: Ubuntu 20.04
--- PostgreSQL Version: 14.4
+-- Operating System: Ubuntu 20.04 or 22.04
+-- PostgreSQL Version: 14 or 15
 --
+
+-- Remove trailing line breaks
+
+UPDATE us_histcounties
+SET full_name = regexp_replace(full_name, '\r\n', '');
 
 -- Break multipolygons into polygons
 
@@ -340,25 +345,25 @@ FROM us_split
 WHERE ST_Equals(us_histcounties_polygon.geom, us_split.geom);
 
 WITH idnumrows AS (
-	SELECT DISTINCT us_split.gid,
-	  id_num
-	FROM us_split
-	JOIN us_histcounties_polygon
-	  ON us_split.gid = us_histcounties_polygon.splitid
-	UNION DISTINCT
-	SELECT DISTINCT
-	  us_split.gid,
-	  id_num
-	FROM us_split
-	JOIN us_histcounties_polygon
-	  ON splitid IS NULL
-	  AND ST_Contains(us_histcounties_polygon.geom, us_split.geom)
+    SELECT DISTINCT us_split.gid,
+      id_num
+    FROM us_split
+    JOIN us_histcounties_polygon
+      ON us_split.gid = us_histcounties_polygon.splitid
+    UNION DISTINCT
+    SELECT DISTINCT
+      us_split.gid,
+      id_num
+    FROM us_split
+    JOIN us_histcounties_polygon
+      ON splitid IS NULL
+      AND ST_Contains(us_histcounties_polygon.geom, us_split.geom)
 ), idnumgroups AS (
-	SELECT DISTINCT
-	  gid,
-	  array_agg(id_num ORDER BY id_num) AS id_nums
-	FROM idnumrows
-	GROUP BY 1
+    SELECT DISTINCT
+      gid,
+      array_agg(id_num ORDER BY id_num) AS id_nums
+    FROM idnumrows
+    GROUP BY 1
 )
 UPDATE us_split
 SET county_id_nums = idnumgroups.id_nums
@@ -371,25 +376,25 @@ FROM us_split
 WHERE ST_Equals(us_histstateterr_polygon.geom, us_split.geom);
 
 WITH idnumrows AS (
-	SELECT DISTINCT us_split.gid,
-	  id_num
-	FROM us_split
-	JOIN us_histstateterr_polygon
-	  ON us_split.gid = us_histstateterr_polygon.splitid
-	UNION DISTINCT
-	SELECT DISTINCT
-	  us_split.gid,
-	  id_num
-	FROM us_split
-	JOIN us_histstateterr_polygon
-	  ON splitid IS NULL
-	  AND ST_Contains(us_histstateterr_polygon.geom, us_split.geom)
+    SELECT DISTINCT us_split.gid,
+      id_num
+    FROM us_split
+    JOIN us_histstateterr_polygon
+      ON us_split.gid = us_histstateterr_polygon.splitid
+    UNION DISTINCT
+    SELECT DISTINCT
+      us_split.gid,
+      id_num
+    FROM us_split
+    JOIN us_histstateterr_polygon
+      ON splitid IS NULL
+      AND ST_Contains(us_histstateterr_polygon.geom, us_split.geom)
 ), idnumgroups AS (
-	SELECT DISTINCT
-	  gid,
-	  array_agg(id_num ORDER BY id_num) AS id_nums
-	FROM idnumrows
-	GROUP BY 1
+    SELECT DISTINCT
+      gid,
+      array_agg(id_num ORDER BY id_num) AS id_nums
+    FROM idnumrows
+    GROUP BY 1
 )
 UPDATE us_split
 SET state_id_nums = idnumgroups.id_nums
@@ -418,7 +423,8 @@ SELECT topology.AddTopoGeometryColumn('topologydata', 'topologydata', 'us_split_
 INSERT INTO topologydata.us_split_topology (name, id, state_terr, fips, county_id_nums, state_id_nums, topogeometry)
 SELECT name, id, state_terr, fips, county_id_nums, state_id_nums,
     topology.toTopoGeom(geom, 'topologydata', 1)
-FROM us_split;
+FROM us_split
+ORDER BY 1;
 
 -- Combine splits back together into county and state topology layers
 
@@ -448,25 +454,26 @@ CREATE TABLE IF NOT EXISTS topologydata.us_histcounties_topology
 SELECT topology.AddTopoGeometryColumn('topologydata', 'topologydata', 'us_histcounties_topology', 'topogeometry', 'POLYGON') As new_layer_id;
 
 WITH idnumrows AS (
-	SELECT unnest(county_id_nums) AS id_num,
-	topogeometry
-	FROM topologydata.us_split_topology
+    SELECT unnest(county_id_nums) AS id_num,
+    topogeometry
+    FROM topologydata.us_split_topology
 ), idnumelements AS (
-	SELECT DISTINCT id_num,
-	GetTopoGeomElements(topogeometry) AS topogeometryelement
-	FROM idnumrows
+    SELECT DISTINCT id_num,
+    GetTopoGeomElements(topogeometry) AS topogeometryelement
+    FROM idnumrows
 ), idnumgroups AS (
-	SELECT id_num,
-	array_agg(topogeometryelement) AS topogeometryelements
-	FROM idnumelements
-	GROUP BY 1
+    SELECT id_num,
+    array_agg(topogeometryelement) AS topogeometryelements
+    FROM idnumelements
+    GROUP BY 1
 )
 INSERT INTO topologydata.us_histcounties_topology (id_num, name, id, state_terr, fips, version, start_date, end_date, change, citation, start_n, end_n, area_sqmi, cnty_type, full_name, cross_ref, name_start, topogeometry)
 SELECT us_histcounties.id_num, name, id, state_terr, fips, version, start_date, end_date, change, citation, start_n, end_n, area_sqmi, cnty_type, full_name, cross_ref, name_start,
 CreateTopoGeom('topologydata', 3, 2, topogeometryelements) AS topogeometry
 FROM us_histcounties
 JOIN idnumgroups
-  ON us_histcounties.id_num = idnumgroups.id_num;
+  ON us_histcounties.id_num = idnumgroups.id_num
+ORDER BY 1;
 
 CREATE TABLE IF NOT EXISTS topologydata.us_histstateterr_topology
 (
@@ -492,26 +499,157 @@ CREATE TABLE IF NOT EXISTS topologydata.us_histstateterr_topology
 SELECT topology.AddTopoGeometryColumn('topologydata', 'topologydata', 'us_histstateterr_topology', 'topogeometry', 'POLYGON') As new_layer_id;
 
 WITH idnumrows AS (
-	SELECT unnest(state_id_nums) AS id_num,
-	topogeometry
-	FROM topologydata.us_split_topology
+    SELECT unnest(state_id_nums) AS id_num,
+    topogeometry
+    FROM topologydata.us_split_topology
   WHERE state_id_nums IS NOT NULL
 ), idnumelements AS (
-	SELECT DISTINCT id_num,
-	GetTopoGeomElements(topogeometry) AS topogeometryelement
-	FROM idnumrows
+    SELECT DISTINCT id_num,
+    GetTopoGeomElements(topogeometry) AS topogeometryelement
+    FROM idnumrows
 ), idnumgroups AS (
-	SELECT id_num,
-	array_agg(topogeometryelement) AS topogeometryelements
-	FROM idnumelements
-	GROUP BY 1
+    SELECT id_num,
+    array_agg(topogeometryelement) AS topogeometryelements
+    FROM idnumelements
+    GROUP BY 1
 )
 INSERT INTO topologydata.us_histstateterr_topology (id_num, name, id, version, start_date, end_date, change, citation, start_n, end_n, area_sqmi, terr_type, full_name, abbr_name, name_start, topogeometry)
 SELECT us_histstateterr.id_num, name, id, version, start_date, end_date, change, citation, start_n, end_n, area_sqmi, terr_type, full_name, abbr_name, name_start,
 CreateTopoGeom('topologydata', 3, 3, topogeometryelements) AS topogeometry
 FROM us_histstateterr
 JOIN idnumgroups
-  ON us_histstateterr.id_num = idnumgroups.id_num;
+  ON us_histstateterr.id_num = idnumgroups.id_num
+ORDER BY 1;
+
+-- Remove pseudo-nodes
+
+CREATE OR REPLACE FUNCTION edge_duplicate_delete(
+    )
+    RETURNS void
+    LANGUAGE 'plpgsql'
+    COST 100
+    VOLATILE PARALLEL UNSAFE
+AS $$
+
+    DECLARE
+        edgecursor refcursor;
+        edge1idref integer;
+        edge2idref integer;
+        nodeid integer;
+        errorcount integer := 0;
+        loopcount integer := 0;
+        successcount integer := -1;
+    BEGIN
+
+        WHILE successcount <> 0 AND loopcount < 10 LOOP
+
+            successcount := 0;
+
+            OPEN edgecursor FOR
+            WITH matchingedge AS (
+                SELECT edge1.edge_id AS edge1id,
+                    edge2.edge_id AS edge2id
+                FROM topologydata.edge_data edge1
+                JOIN topologydata.edge_data edge2
+                    ON edge1.edge_id = edge2.next_left_edge
+                    AND edge1.edge_id <> edge2.edge_id
+                    AND edge1.left_face = edge2.left_face
+                    AND edge1.right_face = edge2.right_face
+            )
+            SELECT * FROM matchingedge
+            WHERE edge1id NOT IN (
+                SELECT edge2id
+                FROM matchingedge
+            )
+            ORDER BY 1;
+
+            LOOP
+
+            FETCH edgecursor INTO edge1idref, edge2idref;
+
+            IF NOT FOUND THEN
+                EXIT;
+            END IF;
+
+            BEGIN
+                SELECT topology.ST_ModEdgeHeal('topologydata', edge1idref, edge2idref) INTO nodeid;
+            EXCEPTION WHEN OTHERS THEN
+                errorcount := errorcount + 1;
+                CONTINUE;
+            END;
+
+            successcount := successcount + 1;
+
+            END LOOP;
+
+            CLOSE edgecursor;
+
+            loopcount := loopcount + 1;
+
+            RAISE INFO 'Iteration: %', loopcount;
+            RAISE INFO 'Success: %', successcount;
+            RAISE INFO 'Error: %', errorcount;
+
+        END LOOP;
+
+    END
+$$;
+
+SELECT edge_duplicate_delete();
+
+-- Create separate edge_id based on most recent FIPS and location
+
+CREATE TABLE IF NOT EXISTS topologydata.edge_fips
+(
+    gid serial NOT NULL,
+    edge_id integer,
+    fips_edge_id integer,
+    CONSTRAINT edge_fips_pkey PRIMARY KEY (gid)
+);
+
+WITH faces AS (
+    SELECT fips,
+    (GetTopoGeomElements(topogeometry))[1] AS face_id
+    FROM topologydata.us_split_topology
+), edges AS (
+    SELECT DISTINCT fips,
+    abs(edge_id) AS edge_id
+    FROM faces, ST_GetFaceEdges('topologydata', face_id) AS t(edge_sequence, edge_id)
+), edgefips AS (
+    SELECT edge_id, min(fips)::integer AS fips
+    FROM edges
+    WHERE fips IS NOT NULL
+    GROUP BY 1
+), edgefipscoalesce AS (
+    SELECT edge_id,
+        fips
+    FROM edgefips
+    UNION
+    SELECT edge_id,
+        0 AS fips
+    FROM topologydata.edge_data
+    WHERE edge_id NOT IN (
+        SELECT edge_id
+        FROM edgefips
+    )
+), edgeorder AS (
+    SELECT edgefipscoalesce.edge_id,
+        fips,
+        ROW_NUMBER() OVER (PARTITION BY fips
+            ORDER BY ST_XMin(geom),
+              ST_YMin(geom),
+              ST_XMax(geom),
+              ST_YMax(geom)
+        )::integer AS fipsorder
+    FROM edgefipscoalesce
+    JOIN topologydata.edge_data
+      ON edgefipscoalesce.edge_id = edge_data.edge_id
+)
+INSERT INTO topologydata.edge_fips (edge_id, fips_edge_id)
+SELECT edge_id AS edge_id,
+    fips * 10000 + fipsorder AS fips_edge_id
+FROM edgeorder
+ORDER BY 1;
 
 -- Determine edges and whether inner-outer (outstanding issues: Need to verify this works correctly. Do they have to be in order? What about outer inside inner?)
 
@@ -529,48 +667,50 @@ CREATE INDEX IF NOT EXISTS us_histcounties_topology_edge_id_num_idx
     (id_num ASC NULLS LAST);
 
 WITH faces AS (
-	SELECT 
-	id_num,
-	(GetTopoGeomElements(topogeometry))[1] AS face_id
-	FROM topologydata.us_histcounties_topology
+    SELECT 
+    id_num,
+    (GetTopoGeomElements(topogeometry))[1] AS face_id
+    FROM topologydata.us_histcounties_topology
 ), edges AS (
-	SELECT DISTINCT
-	id_num,
-	face_id,
-	edge_sequence,
-	abs(edge_id) AS edge_id,
-	row_number() OVER (PARTITION BY id_num ORDER BY face_id, edge_sequence, edge_id) AS row_number
-	FROM faces, ST_GetFaceEdges('topologydata', face_id) AS t(edge_sequence, edge_id)
+    SELECT DISTINCT
+    id_num,
+    face_id,
+    edge_sequence,
+    abs(edge_id) AS edge_id,
+    row_number() OVER (PARTITION BY id_num ORDER BY face_id, edge_sequence, edge_id) AS row_number
+    FROM faces, ST_GetFaceEdges('topologydata', face_id) AS t(edge_sequence, edge_id)
 ), interiorringcount AS (
-	SELECT
-	id_num,
-	ST_NumInteriorRings((ST_Dump(ST_Multi(geom))).geom) AS interiorringcount
-	FROM us_histcounties
-), hasinteriorring AS (
-	SELECT id_num
-	FROM interiorringcount
-	GROUP BY 1
-	HAVING sum(interiorringcount) > 0
-), exteriorringparts AS (
-	SELECT us_histcounties.id_num,
-	  ST_ExteriorRing((ST_Dump(ST_Multi(geom))).geom) AS geom
+    SELECT
+    id_num,
+    ST_NumInteriorRings((ST_Dump(ST_Multi(geom))).geom) AS interiorringcount
     FROM us_histcounties
-	JOIN hasinteriorring
-	  ON us_histcounties.id_num = hasinteriorring.id_num
+), hasinteriorring AS (
+    SELECT id_num
+    FROM interiorringcount
+    GROUP BY 1
+    HAVING sum(interiorringcount) > 0
+), exteriorringparts AS (
+    SELECT us_histcounties.id_num,
+      ST_ExteriorRing((ST_Dump(ST_Multi(geom))).geom) AS geom
+    FROM us_histcounties
+    JOIN hasinteriorring
+      ON us_histcounties.id_num = hasinteriorring.id_num
 ), exteriorrings AS (
-	SELECT id_num,
-	  ST_Union(geom) AS geom
+    SELECT id_num,
+      ST_Union(geom) AS geom
     FROM exteriorringparts
-	GROUP BY 1
+    GROUP BY 1
 )
 INSERT INTO topologydata.us_histcounties_topology_edge (id_num, edge_id, edge_type)
 SELECT DISTINCT edges.id_num,
-edges.edge_id,
+edge_fips.fips_edge_id AS edge_id,
 CASE
     WHEN exteriorrings.id_num IS NOT NULL THEN 'inner'
     ELSE 'outer'
 END AS edge_type
 FROM edges
+JOIN topologydata.edge_fips
+  ON edges.edge_id = edge_fips.edge_id
 LEFT JOIN edges otheredges
   ON edges.id_num = otheredges.id_num
   AND edges.edge_id = otheredges.edge_id
@@ -600,48 +740,50 @@ CREATE INDEX IF NOT EXISTS us_histstateterr_topology_edge_id_num_idx
     (id_num ASC NULLS LAST);
 
 WITH faces AS (
-	SELECT 
-	id_num,
-	(GetTopoGeomElements(topogeometry))[1] AS face_id
-	FROM topologydata.us_histstateterr_topology
+    SELECT 
+    id_num,
+    (GetTopoGeomElements(topogeometry))[1] AS face_id
+    FROM topologydata.us_histstateterr_topology
 ), edges AS (
-	SELECT DISTINCT
-	id_num,
-	face_id,
-	edge_sequence,
-	abs(edge_id) AS edge_id,
-	row_number() OVER (PARTITION BY id_num ORDER BY face_id, edge_sequence, edge_id) AS row_number
-	FROM faces, ST_GetFaceEdges('topologydata', face_id) AS t(edge_sequence, edge_id)
+    SELECT DISTINCT
+    id_num,
+    face_id,
+    edge_sequence,
+    abs(edge_id) AS edge_id,
+    row_number() OVER (PARTITION BY id_num ORDER BY face_id, edge_sequence, edge_id) AS row_number
+    FROM faces, ST_GetFaceEdges('topologydata', face_id) AS t(edge_sequence, edge_id)
 ), interiorringcount AS (
-	SELECT
-	id_num,
-	ST_NumInteriorRings((ST_Dump(ST_Multi(geom))).geom) AS interiorringcount
-	FROM us_histstateterr
-), hasinteriorring AS (
-	SELECT id_num
-	FROM interiorringcount
-	GROUP BY 1
-	HAVING sum(interiorringcount) > 0
-), exteriorringparts AS (
-	SELECT us_histstateterr.id_num,
-	  ST_ExteriorRing((ST_Dump(ST_Multi(geom))).geom) AS geom
+    SELECT
+    id_num,
+    ST_NumInteriorRings((ST_Dump(ST_Multi(geom))).geom) AS interiorringcount
     FROM us_histstateterr
-	JOIN hasinteriorring
-	  ON us_histstateterr.id_num = hasinteriorring.id_num
+), hasinteriorring AS (
+    SELECT id_num
+    FROM interiorringcount
+    GROUP BY 1
+    HAVING sum(interiorringcount) > 0
+), exteriorringparts AS (
+    SELECT us_histstateterr.id_num,
+      ST_ExteriorRing((ST_Dump(ST_Multi(geom))).geom) AS geom
+    FROM us_histstateterr
+    JOIN hasinteriorring
+      ON us_histstateterr.id_num = hasinteriorring.id_num
 ), exteriorrings AS (
-	SELECT id_num,
-	  ST_Union(geom) AS geom
+    SELECT id_num,
+      ST_Union(geom) AS geom
     FROM exteriorringparts
-	GROUP BY 1
+    GROUP BY 1
 )
 INSERT INTO topologydata.us_histstateterr_topology_edge (id_num, edge_id, edge_type)
 SELECT DISTINCT edges.id_num,
-edges.edge_id,
+edge_fips.fips_edge_id AS edge_id,
 CASE
     WHEN exteriorrings.id_num IS NOT NULL THEN 'inner'
     ELSE 'outer'
 END AS edge_type
 FROM edges
+JOIN topologydata.edge_fips
+  ON edges.edge_id = edge_fips.edge_id
 LEFT JOIN edges otheredges
   ON edges.id_num = otheredges.id_num
   AND edges.edge_id = otheredges.edge_id
