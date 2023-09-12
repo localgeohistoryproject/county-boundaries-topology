@@ -521,6 +521,82 @@ JOIN idnumgroups
   ON us_histstateterr.id_num = idnumgroups.id_num
 ORDER BY 1;
 
+-- Remove pseudo-nodes
+
+CREATE OR REPLACE FUNCTION edge_duplicate_delete(
+    )
+    RETURNS void
+    LANGUAGE 'plpgsql'
+    COST 100
+    VOLATILE PARALLEL UNSAFE
+AS $$
+
+    DECLARE
+        edgecursor refcursor;
+        edge1idref integer;
+        edge2idref integer;
+        nodeid integer;
+        errorcount integer := 0;
+        loopcount integer := 0;
+        successcount integer := -1;
+    BEGIN
+
+        WHILE successcount <> 0 AND loopcount < 10 LOOP
+
+            successcount := 0;
+
+            OPEN edgecursor FOR
+            WITH matchingedge AS (
+                SELECT edge1.edge_id AS edge1id,
+                    edge2.edge_id AS edge2id
+                FROM topologydata.edge_data edge1
+                JOIN topologydata.edge_data edge2
+                    ON edge1.edge_id = edge2.next_left_edge
+                    AND edge1.edge_id <> edge2.edge_id
+                    AND edge1.left_face = edge2.left_face
+                    AND edge1.right_face = edge2.right_face
+            )
+            SELECT * FROM matchingedge
+            WHERE edge1id NOT IN (
+                SELECT edge2id
+                FROM matchingedge
+            )
+            ORDER BY 1;
+
+            LOOP
+
+            FETCH edgecursor INTO edge1idref, edge2idref;
+
+            IF NOT FOUND THEN
+                EXIT;
+            END IF;
+
+            BEGIN
+                SELECT topology.ST_ModEdgeHeal('topologydata', edge1idref, edge2idref) INTO nodeid;
+            EXCEPTION WHEN OTHERS THEN
+                errorcount := errorcount + 1;
+                CONTINUE;
+            END;
+
+            successcount := successcount + 1;
+
+            END LOOP;
+
+            CLOSE edgecursor;
+
+            loopcount := loopcount + 1;
+
+            RAISE INFO 'Iteration: %', loopcount;
+            RAISE INFO 'Success: %', successcount;
+            RAISE INFO 'Error: %', errorcount;
+
+        END LOOP;
+
+    END
+$$;
+
+SELECT edge_duplicate_delete();
+
 -- Create separate edge_id based on most recent FIPS and location
 
 CREATE TABLE IF NOT EXISTS topologydata.edge_fips
